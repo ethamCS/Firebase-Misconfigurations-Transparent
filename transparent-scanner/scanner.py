@@ -4,6 +4,8 @@ import hashlib
 import concurrent.futures
 import requests
 
+#TODO: finalize regex/pattern matching for generalizability
+
 pii_set = set([
     'full_name'
     'id'
@@ -22,6 +24,26 @@ pii_set = set([
     'nationality',
 ])
 
+pii_patterns = {
+    'username_column': r'(?i)\b(username|user[_ ]?name|user|uname)\b',
+    'first_name_column': r'(?i)\b(first[_ ]?name|given[_ ]?name|forename|fname)\b',
+    'last_name_column': r'(?i)\b(last[_ ]?name|surname|lname)\b',
+    'dob_column': r'(?i)\b(date[_ ]?of[_ ]?birth|dob|birthdate)\b',
+    'email_column': r'(?i)\b(email|e[_ ]?mail)\b',
+    'phone_column': r'(?i)\b(phone[_ ]?number|phone|cell[_ ]?phone|mobile[_ ]?number)\b',
+    'address_column': r'(?i)\b(address|addr)\b',
+    'ssn_column': r'(?i)\b(ssn|social[_ ]?security[_ ]?number)\b',
+    'id_column': r'(?i)\b(id|identifier)\b',
+    'passport_number_column': r'(?i)\b(passport[_ ]?number)\b',
+    'bank_account_column': r'(?i)\b(bank[_ ]?account[_ ]?number)\b',
+    'credit_card_column': r'(?i)\b(credit[_ ]?card[_ ]?number)\b',
+    'driver_license_column': r'(?i)\b(driver[_ ]?license)\b',
+    'ip_address_column': r'(?i)\b(ip[_ ]?address)\b',
+    'employee_id_column': r'(?i)\b(employee[_ ]?id)\b',
+    'medical_record_column': r'(?i)\b(medical[_ ]?record)\b',
+    'vehicle_id_column': r'(?i)\b(vehicle[_ ]?id)\b',
+}
+pii_set = set(pii_patterns.keys())
 
 def parse(response, attributes):
     for key, value in response.items():
@@ -34,19 +56,20 @@ def parse(response, attributes):
 
 def detect_pii(attributes):
     matches = pii_set.intersection(attributes)
-    print(matches)
-    for match in matches:
+    regex_matches = pii_set.intersection(attributes)
+    combined_matches = matches.union(regex_matches)
+    for match in combined_matches:
         print(f"Match found: PII '{match}'")
+    return combined_matches
 
 
 def find_firebase_project_names_parallel(parent, file):
 
-    print("Testing " + file + "...\n")
+    print(f'Testing {file} ...\n')
     firebase_project_list = []
     regex = 'https*://(.+?)\.firebaseio.com'
 
     src = os.path.join(parent, file)
-    print(src)
 
     def process_file(fullpath):
         temp_list = []
@@ -93,27 +116,28 @@ def scan_firebase_projects(firebase_project_list):
         if response.status_code == 401:
             print("Secure Firebase Instance Found: " + project_name, "SECURE")
         elif response.status_code == 404:
-            print("Project does not exist: " + project_name, "OUTPUT_WS")
+            print("Project does not exist: " + project_name, "NA")
         else:
             keys = response.json().keys()
             out = parse(response.json(), attributes)
             out = set(out)
-            if 'email' in out:
-                print("TRUE")
-            detect_pii(out)
+            pii = detect_pii(out)
             print("Misconfigured Firebase Instance Found: " +
-                  project_name, "INSECURE_WS")
+                  project_name, "INSECURE")
+            return pii
 
 
 def main():
-    parent_directory = '/Users/ethanmyers/Firebase-Misconfigurations-Transparent/decompliler/jadx_results/'
-    apk_file = 'snorelab'
+    parent_directory = './decompiler/jadx_results/'
+    apk_files = [f for f in os.listdir('./decompiler/jadx_results/')]
 
-    firebase_projects = find_firebase_project_names_parallel(
-        parent_directory, apk_file)
-    firebase_projects.append('dailybreath-b4b40')
-    print(firebase_projects)
-    scan_firebase_projects(firebase_projects)
+    for apk in apk_files:
+        firebase_projects = find_firebase_project_names_parallel(
+            parent_directory, apk)
+        if len(firebase_projects) < 0:
+            continue
+        pii_found = scan_firebase_projects(firebase_projects)
+        print(pii_found)
 
 
 if __name__ == "__main__":
