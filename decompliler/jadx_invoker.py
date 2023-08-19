@@ -25,7 +25,7 @@ class jadx:
 
 def main():
     parser = argparse.ArgumentParser(description="Batch Decompile Directory of APK's")
-    parser.add_argument('--jadxPath', help='path to jadx')
+    # parser.add_argument('--jadxPath', help='path to jadx')
     parser.add_argument('--apks', help='path to apks')
 
     args = parser.parse_args()
