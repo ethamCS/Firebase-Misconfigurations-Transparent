@@ -22,6 +22,10 @@ pii_set = set([
     'date of birth',
     'gender',
     'nationality',
+    'tax',
+    'cps'
+    'name'
+    'birth'
 ])
 
 def parse(response, attributes):
@@ -83,7 +87,9 @@ def scan_firebase_projects(firebase_project_list):
     attributes = []
     print("Scanning Firebase Projects")
     for project_name in firebase_project_list:
-        url = 'https://' + project_name + '.firebaseio.com/.json'
+        # url = 'https://' + project_name + '.firebaseio.com/.json'
+        url = 'https://x-component-development.firebaseio.com/.json'
+        print(url)
         print(url)
         try:
             response = requests.get(url)
@@ -105,10 +111,37 @@ def scan_firebase_projects(firebase_project_list):
                   project_name, "INSECURE")
             return pii
 
+def scan_firebase_projects_test():
+    attributes = []
+   
+    # url = 'https://' + project_name + '.firebaseio.com/.json'
+    url = 'https://x-component-development.firebaseio.com/.json'
+    print(url)
+    print(url)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as err:
+        print("An error occurred while making the request:", err)
+    
+
+    if response.status_code == 401:
+        print("Secure Firebase Instance Found: SECURE")
+    elif response.status_code == 404:
+        print("Project does not exist: NA")
+    else:
+        keys = response.json().keys()
+        out = parse(response.json(), attributes)
+        out = set(out)
+        pii = detect_pii(out)
+        print("Misconfigured Firebase Instance Found: INSECURE")
+        print(pii)
+        return pii
 
 def main():
-    parent_directory = './decompiler/jadx_results/'
-    apk_files = [f for f in os.listdir('./decompiler/jadx_results/')]
+    parent_directory = '/Users/ethanmyers/Firebase-Misconfigurations-Transparent/decompliler/jadx_results/'
+    # apk_files = [f for f in os.listdir('/Users/ethanmyers/Firebase-Misconfigurations-Transparent/decompliler/jadx_results/')]
+    apk_files = [f for f in os.listdir(parent_directory)]
 
     for apk in apk_files:
         firebase_projects = find_firebase_project_names_parallel(
@@ -121,3 +154,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # scan_firebase_projects_test()
