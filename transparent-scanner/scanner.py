@@ -24,27 +24,6 @@ pii_set = set([
     'nationality',
 ])
 
-pii_patterns = {
-    'username_column': r'(?i)\b(username|user[_ ]?name|user|uname)\b',
-    'first_name_column': r'(?i)\b(first[_ ]?name|given[_ ]?name|forename|fname)\b',
-    'last_name_column': r'(?i)\b(last[_ ]?name|surname|lname)\b',
-    'dob_column': r'(?i)\b(date[_ ]?of[_ ]?birth|dob|birthdate)\b',
-    'email_column': r'(?i)\b(email|e[_ ]?mail)\b',
-    'phone_column': r'(?i)\b(phone[_ ]?number|phone|cell[_ ]?phone|mobile[_ ]?number)\b',
-    'address_column': r'(?i)\b(address|addr)\b',
-    'ssn_column': r'(?i)\b(ssn|social[_ ]?security[_ ]?number)\b',
-    'id_column': r'(?i)\b(id|identifier)\b',
-    'passport_number_column': r'(?i)\b(passport[_ ]?number)\b',
-    'bank_account_column': r'(?i)\b(bank[_ ]?account[_ ]?number)\b',
-    'credit_card_column': r'(?i)\b(credit[_ ]?card[_ ]?number)\b',
-    'driver_license_column': r'(?i)\b(driver[_ ]?license)\b',
-    'ip_address_column': r'(?i)\b(ip[_ ]?address)\b',
-    'employee_id_column': r'(?i)\b(employee[_ ]?id)\b',
-    'medical_record_column': r'(?i)\b(medical[_ ]?record)\b',
-    'vehicle_id_column': r'(?i)\b(vehicle[_ ]?id)\b',
-}
-pii_set = set(pii_patterns.keys())
-
 def parse(response, attributes):
     for key, value in response.items():
         # print(key)
